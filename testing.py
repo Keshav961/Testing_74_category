@@ -8,7 +8,7 @@ from tensorflow.keras.preprocessing import image
 from PIL import Image
 
 # Load trained model
-model = tf.keras.models.load_model("/home/keshav/Downloads/CaRPM/VsCode/car_parts_model_74_category.h5")  # Update with your model path
+model = tf.keras.models.load_model("car_parts_model_74_category.h5")  # Update with your model path
 
 # Load class names
 class_names = ['AIR COMPRESSOR',
