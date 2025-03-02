@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 from PIL import Image
-Import os
+import os
 
 # Load the trained model
 MODEL_PATH = "car_parts_model_74_category.h5"
