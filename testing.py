@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 import os
+import streamlit as st
+
 
 # Load the trained model
 MODEL_PATH = "car_parts_model_74_category.h5"
