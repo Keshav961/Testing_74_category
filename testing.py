@@ -45,7 +45,8 @@ def predict_image(image):
     return class_names[predicted_class_idx], confidence
 
 # Streamlit UI
-st.title("🚗 Car Spare Parts Classifier")
+st.title("🚗 Car Spare Parts Classifier  - Batch Testing")
+st.write("Upload multiple images to classify car parts.")
 
 # Upload multiple images
 uploaded_files = st.file_uploader("Upload Images", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
