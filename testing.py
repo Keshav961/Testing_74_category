@@ -2,11 +2,10 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
-import os
 import pandas as pd
 
 # Load trained model
-MODEL_PATH = "car_parts_model_74_category.h5"  # Update with your actual model file path
+MODEL_PATH = "car_parts_model_74_category.h5"  # Update with actual model path
 model = tf.keras.models.load_model(MODEL_PATH)
 
 # List of 74 spare part categories
@@ -45,20 +44,20 @@ def predict_image(image):
     return class_names[predicted_class_idx], confidence
 
 # Streamlit UI
-st.title("🚗 Car Spare Parts Classifier  - Batch Testing")
+st.title("🚗 Car Spare Parts Classifier - Batch Testing")
 st.write("Upload multiple images to classify car parts.")
+
 
 # Upload multiple images
 uploaded_files = st.file_uploader("Upload Images", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
 # Check if new images are uploaded
 if uploaded_files:
-    # Clear previous results from session state
-    if "results" in st.session_state:
-        st.session_state.results = []  # Reset the previous results
-    
+    # Clear previous results from session state to only show new uploads
+    st.session_state.results = []
+
     results = []  # Store results for display
-    
+
     # Display prediction results
     st.write("## 🔍 Predictions")
     cols = st.columns(3)  # Arrange images in 3 columns
@@ -79,7 +78,7 @@ if uploaded_files:
     # Show results in a table
     df_results = pd.DataFrame(results, columns=["Image Name", "Predicted Class", "Confidence"])
     st.write("### 📊 Summary Table")
-    st.dataframe(df_results)
+    st.dataframe(df_results, use_container_width=True)
 
     # Save results in session state
     st.session_state.results = results
