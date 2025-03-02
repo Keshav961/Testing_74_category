@@ -1,10 +1,9 @@
+import streamlit as st
 import tensorflow as tf
 import numpy as np
 import pandas as pd
 from PIL import Image
-import os
-import streamlit as st
-
+Import os
 
 # Load the trained model
 MODEL_PATH = "car_parts_model_74_category.h5"
@@ -84,7 +83,7 @@ class_names = ['AIR COMPRESSOR',
  'WATER PUMP',
  'WHEEL RIM',
  'WINDOW REGULATOR',
- 'WIPER BLADE']  # Replace with your actual class names
+ 'WIPER BLADE']  # Replace with actual labels
 
 # Image preprocessing function
 def preprocess_image(image):
@@ -103,10 +102,10 @@ uploaded_files = st.file_uploader("Upload Images", type=["jpg", "png", "jpeg"], 
 # Process and predict
 if uploaded_files:
     results = []  # Store predictions
-    
-    # Display images and predictions in a grid layout
-    cols = st.columns(3)  # Create 3 columns for better layout
-    
+
+    num_cols = 3  # Number of images per row
+    cols = st.columns(num_cols)  # Create 3 columns for better layout
+
     for index, uploaded_file in enumerate(uploaded_files):
         image = Image.open(uploaded_file)
         processed_image = preprocess_image(image)
@@ -123,10 +122,10 @@ if uploaded_files:
             "Confidence (%)": confidence
         })
 
-        # Display image with prediction
-        with cols[index % 3]:  # Arrange images in 3-column layout
-            st.image(image, caption=f"{uploaded_file.name}", use_container_width=True)
-            st.write(f"**Predicted:** {predicted_class}  \n**Confidence:** {confidence}%")
+        # Display images in a structured format (grid layout)
+        with cols[index % num_cols]:  # Arrange images in 3-column layout
+            st.image(image, caption=f"📌 {uploaded_file.name}", use_container_width=True)
+            st.markdown(f"**Predicted:** {predicted_class}  \n**Confidence:** {confidence}%")
 
     # Convert results to DataFrame
     results_df = pd.DataFrame(results)
