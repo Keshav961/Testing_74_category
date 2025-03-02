@@ -133,7 +133,7 @@ if uploaded_files:
 
         # Display images & predictions in structured format
         with cols[idx % 3]:  # Distribute images in columns
-            st.image(image, caption=f"Predicted: {predicted_label}\nConfidence: {confidence:.2f}%", use_column_width=True)
+            st.image(image, caption=f"Predicted: {predicted_label}\nConfidence: {confidence:.2f}%", use_container_width=True)
 
     # Show results in a table
     df_results = pd.DataFrame(results, columns=["Image Name", "Predicted Class", "Confidence"])
