@@ -1,16 +1,14 @@
-import streamlit as st
-import numpy as np
 import tensorflow as tf
-import os
+import numpy as np
 import pandas as pd
-from datetime import datetime
-from tensorflow.keras.preprocessing import image
 from PIL import Image
+import os
 
-# Load trained model
-model = tf.keras.models.load_model("car_parts_model_74_category.h5")  # Update with your model path
+# Load the trained model
+MODEL_PATH = "car_parts_model_74_category.h5"
+model = tf.keras.models.load_model(MODEL_PATH)
 
-# Load class names
+# Define class names (update with actual class names)
 class_names = ['AIR COMPRESSOR',
  'AIR FILTER',
  'ALTERNATOR',
@@ -84,49 +82,58 @@ class_names = ['AIR COMPRESSOR',
  'WATER PUMP',
  'WHEEL RIM',
  'WINDOW REGULATOR',
- 'WIPER BLADE']  # Replace with actual class names
+ 'WIPER BLADE']  # Replace with your actual class names
 
-# Create folder to store images
-os.makedirs("predictions", exist_ok=True)
+# Image preprocessing function
+def preprocess_image(image):
+    image = image.resize((224, 224))  # Resize to model input size
+    image = np.array(image) / 255.0  # Normalize
+    image = np.expand_dims(image, axis=0)  # Add batch dimension
+    return image
 
 # Streamlit UI
-st.title("🚗 Car Spare Parts Classifier")
-st.write("Upload an image to classify the spare part.")
+st.title("🚗 Car Parts Classifier - Batch Testing")
+st.write("Upload multiple images to classify car parts.")
 
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
+# Upload multiple images
+uploaded_files = st.file_uploader("Upload Images", type=["jpg", "png", "jpeg"], accept_multiple_files=True)
 
-if uploaded_file is not None:
-    # Load and display the image
-    img = Image.open(uploaded_file)
-    st.image(img, caption="Uploaded Image", use_container_width=True)
+# Process and predict
+if uploaded_files:
+    results = []  # Store predictions
+    
+    # Display images and predictions in a grid layout
+    cols = st.columns(3)  # Create 3 columns for better layout
+    
+    for index, uploaded_file in enumerate(uploaded_files):
+        image = Image.open(uploaded_file)
+        processed_image = preprocess_image(image)
 
-    # Preprocess image
-    img = img.resize((224, 224))
-    img_array = image.img_to_array(img)
-    img_array = np.expand_dims(img_array, axis=0) / 255.0  # Normalize
+        # Get model prediction
+        predictions = model.predict(processed_image)
+        predicted_class = class_names[np.argmax(predictions)]  # Get class label
+        confidence = round(np.max(predictions) * 100, 2)  # Get confidence score
 
-    # Predict
-    predictions = model.predict(img_array)
-    confidence = np.max(predictions)
-    predicted_class = class_names[np.argmax(predictions)]
+        # Store results
+        results.append({
+            "Image Name": uploaded_file.name,
+            "Predicted Class": predicted_class,
+            "Confidence (%)": confidence
+        })
 
-    # Display result
-    st.write(f"**Predicted Class:** {predicted_class}")
-    st.write(f"**Confidence:** {confidence:.2f}")
+        # Display image with prediction
+        with cols[index % 3]:  # Arrange images in 3-column layout
+            st.image(image, caption=f"{uploaded_file.name}", use_container_width=True)
+            st.write(f"**Predicted:** {predicted_class}  \n**Confidence:** {confidence}%")
 
-    # Save the uploaded image with a timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    img_filename = f"predictions/{timestamp}_{predicted_class}.jpg"
-    img.save(img_filename)
+    # Convert results to DataFrame
+    results_df = pd.DataFrame(results)
 
-    # Save results to CSV
-    csv_filename = "predictions/predictions_log.csv"
-    new_data = pd.DataFrame([[timestamp, uploaded_file.name, predicted_class, confidence]], 
-                            columns=["Timestamp", "Original Filename", "Predicted Class", "Confidence"])
+    # Display results in table
+    st.write("### 📝 Prediction Results")
+    st.dataframe(results_df, use_container_width=True)  # Use full width for better visibility
 
-    if os.path.exists(csv_filename):
-        new_data.to_csv(csv_filename, mode="a", header=False, index=False)
-    else:
-        new_data.to_csv(csv_filename, mode="w", header=True, index=False)
-
-    st.success("Prediction saved successfully!")
+    # Download button for CSV
+    csv_filename = "batch_predictions.csv"
+    results_df.to_csv(csv_filename, index=False)
+    st.download_button("📥 Download Results", data=open(csv_filename).read(), file_name=csv_filename, mime="text/csv")
