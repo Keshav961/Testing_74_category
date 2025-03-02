@@ -1,15 +1,15 @@
-import streamlit as st
+
 import tensorflow as tf
 import numpy as np
+import pandas as pd
 from PIL import Image
 import os
-import pandas as pd
 
-# Load trained model
-MODEL_PATH = "car_parts_model_74_category.h5"  # Update with your model file path
+# Load the trained model
+MODEL_PATH = "car_parts_model_74_category.h5"
 model = tf.keras.models.load_model(MODEL_PATH)
 
-# Get class names from the mode
+# Define class names (update with actual class names)
 class_names = ['AIR COMPRESSOR',
  'AIR FILTER',
  'ALTERNATOR',
@@ -83,64 +83,58 @@ class_names = ['AIR COMPRESSOR',
  'WATER PUMP',
  'WHEEL RIM',
  'WINDOW REGULATOR',
- 'WIPER BLADE']  # Replace with actual class names
+ 'WIPER BLADE']  # Replace with your actual class names
 
-# Function to preprocess images
+# Image preprocessing function
 def preprocess_image(image):
-    image = image.convert("RGB")  # Ensure RGB format
-    image = image.resize((224, 224))  # Resize to match model input
-    image = np.array(image) / 255.0  # Normalize pixel values
+    image = image.resize((224, 224))  # Resize to model input size
+    image = np.array(image) / 255.0  # Normalize
     image = np.expand_dims(image, axis=0)  # Add batch dimension
-    return image.astype(np.float32)
-
-# Function to predict image class
-def predict_image(image):
-    processed_image = preprocess_image(image)
-    predictions = model.predict(processed_image)
-    predicted_class_idx = np.argmax(predictions, axis=1)[0]
-    confidence = np.max(predictions) * 100
-    return class_names[predicted_class_idx], confidence
-
-# Directory to save uploaded images & predictions
-SAVE_DIR = "uploads"
-if not os.path.exists(SAVE_DIR):
-    os.makedirs(SAVE_DIR)
+    return image
 
 # Streamlit UI
-st.title("🚗 Car Spare Parts Classifier")
+st.title("🚗 Car Parts Classifier - Batch Testing")
+st.write("Upload multiple images to classify car parts.")
 
 # Upload multiple images
-uploaded_files = st.file_uploader("Upload Images", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+uploaded_files = st.file_uploader("Upload Images", type=["jpg", "png", "jpeg"], accept_multiple_files=True)
 
+# Process and predict
 if uploaded_files:
-    results = []
+    results = []  # Store predictions
     
-    st.write("## 🔍 Predictions")
-    cols = st.columns(3)  # Arrange images in 3 columns
-
-    for idx, uploaded_file in enumerate(uploaded_files):
+    # Display images and predictions in a grid layout
+    cols = st.columns(3)  # Create 3 columns for better layout
+    
+    for index, uploaded_file in enumerate(uploaded_files):
         image = Image.open(uploaded_file)
+        processed_image = preprocess_image(image)
 
-        # Predict class & confidence
-        predicted_label, confidence = predict_image(image)
-
-        # Save image
-        image_path = os.path.join(SAVE_DIR, uploaded_file.name)
-        image.save(image_path)
+        # Get model prediction
+        predictions = model.predict(processed_image)
+        predicted_class = class_names[np.argmax(predictions)]  # Get class label
+        confidence = round(np.max(predictions) * 100, 2)  # Get confidence score
 
         # Store results
-        results.append([uploaded_file.name, predicted_label, f"{confidence:.2f}%"])
+        results.append({
+            "Image Name": uploaded_file.name,
+            "Predicted Class": predicted_class,
+            "Confidence (%)": confidence
+        })
 
-        # Display images & predictions in structured format
-        with cols[idx % 3]:  # Distribute images in columns
-            st.image(image, caption=f"Predicted: {predicted_label}\nConfidence: {confidence:.2f}%", use_container_width=True)
+        # Display image with prediction
+        with cols[index % 3]:  # Arrange images in 3-column layout
+            st.image(image, caption=f"{uploaded_file.name}", use_container_width=True)
+            st.write(f"**Predicted:** {predicted_class}  \n**Confidence:** {confidence}%")
 
-    # Show results in a table
-    df_results = pd.DataFrame(results, columns=["Image Name", "Predicted Class", "Confidence"])
-    st.write("### 📊 Summary Table")
-    st.dataframe(df_results)
+    # Convert results to DataFrame
+    results_df = pd.DataFrame(results)
 
-    # Save results as CSV
-    csv_path = os.path.join(SAVE_DIR, "predictions.csv")
-    df_results.to_csv(csv_path, index=False)
-    st.success(f"Results saved to: {csv_path}")
+    # Display results in table
+    st.write("### 📝 Prediction Results")
+    st.dataframe(results_df, use_container_width=True)  # Use full width for better visibility
+
+    # Download button for CSV
+    csv_filename = "batch_predictions.csv"
+    results_df.to_csv(csv_filename, index=False)
+    st.download_button("📥 Download Results", data=open(csv_filename).read(), file_name=csv_filename, mime="text/csv")
