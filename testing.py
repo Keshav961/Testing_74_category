@@ -9,7 +9,7 @@ import pandas as pd
 MODEL_PATH = "car_parts_model_74_category.h5"  # Update with your model file path
 model = tf.keras.models.load_model(MODEL_PATH)
 
-# Get class names from the model
+# Get class names from the mode
 class_names = ['AIR COMPRESSOR',
  'AIR FILTER',
  'ALTERNATOR',
